@@ -12,17 +12,27 @@
 #include <freertos/task.h>
 #include <vector> 
 
-class WiFiSetup {
+class ESP_Repeater {
 private:
-	const char *ap_ssid = "ESP32-C5";
-	const char *ap_pass = "12345678";
-	const char *pop = "abcd1234";
-	const char *service_name = "C5";
-	const char *service_key = NULL;
-	const bool reset_provisioned = false;
+	const char* ap_ssid{"ESP32-C5"};
+	const char* ap_pass{"12345678"};
+	const char* pop{"abcd1234"};
+	const char* service_name{"C5"};
+	const char* service_key{nullptr};			// dedicated keyword for preventing type errors
+	bool reset_provisioned{false};
+	bool prov_done{false};
+	bool got_ip{false};
+	bool ap_started{false};
+	bool napt_enabled{false};
+	int ch{0};                                
+	const IPAddress ap_ip{192, 168, 10, 1};
+	const IPAddress ap_gw{192, 168, 10, 1};
+	const IPAddress ap_mask{255, 255, 255, 0};
+	const IPAddress ap_dhcpstart{192, 168, 10, 2};
+	const IPAddress ap_dns{8, 8, 8, 8};
 
 public:
-    WiFiSetup();
+    ESP_Repeater();
     
     bool BLEProvision();
     
@@ -32,11 +42,29 @@ public:
 
     void connect(arduino_event_t *event);
 
-    bool is_online() const;
+    bool is_sta_active() const;
 
-    bool is_ap_active const;
+    bool is_ap_active() const;
 
-    bool is_provisioned const;
+    bool is_provisioned() const;
+};
+
+class Button {
+private:
+    int8_t button_num{0};
+	bool is_pressed{false};
+	unsigned long press_timer_start{0};
+
+   	public:
+    enum class Press_Type {
+    	NONE,
+    	SHORT_PRESS,
+    	LONG_PRESS
+    };
+
+   	Press_Type get_event();			// read buttton press type and return what type of press occured
+   	
+    Button(int8_t pin);
 };
 
 class NVS {
@@ -53,12 +81,6 @@ public:
     bool socket_algo(std::vector<int8_t>& socket_num, std::vector<int8_t>& rssi);
 };
 
-class Button {
-private:
-    int8_t button_num;
-public:
-    Button(int8_t button_num);
-};
 
 class TB {
 private:
