@@ -12,6 +12,8 @@
 #include <freertos/task.h>
 #include <vector> 
 
+using namespace std;
+
 class ESP_Repeater {
 private:
 	const char* ap_ssid{"ESP32-C5"};
@@ -67,63 +69,81 @@ private:
     Button(int8_t pin);
 };
 
+class Oled {
+private:
+    const uint8_t sensor_sda{6};
+    const uint8_t sensor_scl{7};
+    const uint8_t height{64};
+    const uint8_t width{128};
+    const uint8_t LED{1};
+    Adafruit_SSD1306 display{width, height};
+    
+
+public:
+    Oled();
+
+    void welcome_msg();
+
+    void credential_check_msg();
+
+    void reset_provision_msg();
+
+    void provisioning_msg();
+
+    void sta_name_msg();
+
+    void sta_rssi_msg();
+
+    void ap_name_msg();
+
+    void socket_read_msg();
+
+    void socket_write_msg(const vector<uint8_t>& socket_num, const vector<int16_t>& rssi);
+
+	void best_socket_msg(const vector<uint8_t>& median_socket, const vector<uint8_t>& median_rssi);
+
+    void user_prompt_msg();
+
+    void no_readings_msg();
+
+    void connecting_msg();
+
+    void survey_prompt_msg();
+
+    void repeater_mode_msg();
+};
+
+
 class NVS {
 private:
+	vector<uint8_t>& socket_num;
+	vector<int16_t>& rssi;
+	Preferences nvs;
+	
 public:
-    NVS();
-
-    void start();
+    NVS(vector<uint8_t>& socket_count, vector<int16_t>& rssi_readings);
 
     void write();
 
-    void read() const;
+    void read();
 
-    bool socket_algo(std::vector<int8_t>& socket_num, std::vector<int8_t>& rssi);
+    void socket_algo();
 };
 
 
 class TB {
 private:
+	WiFiClient esp32;
+	Arduino_MQTT_Client mqttClient(esp32);
+	ThingsBoardSized tb(mqttClient);
+
+	const char tb_host[16] = "192.168.213.10";
+	const char access_token[24] = "W7OO3uuv3BZ5ZyXOjETZ";
+	
 public:
     TB();
+
+    void send_telemetry();
 };
 
-class Oled {
-private:
-    const int8_t sda;
-    const int8_t scl;
-    const int8_t height;
-    const int8_t width;
-    const int8_t LED;
 
-public:
-    Oled(int8_t sda_pin, int8_t scl_pin, int8_t h, int8_t w, int8_t led_pin);
-
-    bool welcome_msg() const;
-
-    bool credential_check_msg() const;
-
-    bool reset_provision_msg() const;
-
-    bool provisioning_msg() const;
-
-    bool sta_name_msg() const;
-
-    bool sta_rssi_msg() const;
-
-    bool ap_name_msg() const;
-
-    bool socket_read_msg() const;
-
-    bool socket_write_msg(const std::vector<int8_t>& socket_num, const std::vector<int8_t>& rssi) const;
-
-    bool user_prompt_msg() const;
-
-    bool no_readings_msg() const;
-
-    bool connecting_msg() const;
-
-    bool survey_prompt_msg() const;
-
-    bool repeater_mode_msg() const;
-};
